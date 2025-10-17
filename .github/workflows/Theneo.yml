@@ -44,7 +44,7 @@ jobs:
 
           WORKSPACE_SLUG: ds-testing
 
-          SECRET: 428a473c-6772-4534-be25-b8c00738e203
+          SECRET: ff9f066d-928f-4e39-a7f5-86b28c3e44a5
 
 
           AUTO_PUBLISH: true
