@@ -38,7 +38,7 @@ jobs:
 
           FILE_PATH: doc/api.yml
 
-          PROJECT_SLUG: asdasdsdasd
+          PROJECT_SLUG: asdasdsdasd-1
 
           SECRET: ff9f066d-928f-4e39-a7f5-86b28c3e44a5
 
