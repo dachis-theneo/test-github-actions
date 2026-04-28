@@ -12,11 +12,15 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Fetch base branch
+        run: |
+          git fetch origin ${{ github.base_ref }}
+
       - name: Check for changes in specific folders
         id: check_changes
         run: |
           # Check if files in these folders were modified
-          git diff origin/${{ github.base_ref }}...HEAD --name-only | grep -E '^(docs/|docs/)' && echo "needs_deployment=true" >> $GITHUB_OUTPUT || echo "needs_deployment=false" >> $GITHUB_OUTPUT
+          git diff origin/${{ github.base_ref }}...HEAD --name-only | grep -E '^docs/' && echo "needs_deployment=true" >> $GITHUB_OUTPUT || echo "needs_deployment=false" >> $GITHUB_OUTPUT
       
       - name: Update PR body with checkbox
         if: steps.check_changes.outputs.needs_deployment == 'true'
