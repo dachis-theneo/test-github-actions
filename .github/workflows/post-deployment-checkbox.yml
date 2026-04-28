@@ -12,11 +12,35 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Fetch base branch
+        run: |
+          git fetch origin ${{ github.base_ref }}
+
       - name: Check for changes in specific folders
         id: check_changes
         run: |
+          # Debug: Show what branches exist
+          echo "Available branches:"
+          git branch -a
+          
+          echo "---"
+          echo "Changed files:"
+          git diff origin/${{ github.base_ref }}...HEAD --name-only
+          
+          echo "---"
+          echo "Checking for doc changes..."
           # Check if files in these folders were modified
-          git diff origin/${{ github.base_ref }}...HEAD --name-only | grep -E '^(doc/|doc/)' && echo "needs_deployment=true" >> $GITHUB_OUTPUT || echo "needs_deployment=false" >> $GITHUB_OUTPUT
+          if git diff origin/${{ github.base_ref }}...HEAD --name-only | grep -E '^doc/'; then
+            echo "needs_deployment=true" >> $GITHUB_OUTPUT
+            echo "✓ Found doc changes"
+          else
+            echo "needs_deployment=false" >> $GITHUB_OUTPUT
+            echo "✗ No doc changes found"
+          fi
+
+      - name: Debug output
+        run: |
+          echo "needs_deployment value: ${{ steps.check_changes.outputs.needs_deployment }}"
       
       - name: Update PR body with checkbox
         if: steps.check_changes.outputs.needs_deployment == 'true'
@@ -26,12 +50,19 @@ jobs:
             const pr = context.payload.pull_request;
             let body = pr.body;
             
+            console.log('Current PR body:');
+            console.log(body);
+            
             // Check if checkbox needs to be ticked
             if (body && !body.includes('- [x] Is there anything to do post-deployment?')) {
+              console.log('Updating checkbox...');
               body = body.replace(
                 '- [ ] Is there anything to do post-deployment?',
                 '- [x] Is there anything to do post-deployment?'
               );
+              
+              console.log('New PR body:');
+              console.log(body);
               
               github.rest.pulls.update({
                 owner: context.repo.owner,
@@ -39,4 +70,7 @@ jobs:
                 pull_number: pr.number,
                 body: body
               });
+              console.log('✓ PR body updated');
+            } else {
+              console.log('✗ Checkbox already checked or body not found');
             }
