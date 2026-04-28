@@ -1,0 +1,42 @@
+name: Auto-check Post-Deployment Checkbox
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  check-deployment-tasks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Check for changes in specific folders
+        id: check_changes
+        run: |
+          # Check if files in these folders were modified
+          git diff origin/${{ github.base_ref }}...HEAD --name-only | grep -E '^(docs/|docs/)' && echo "needs_deployment=true" >> $GITHUB_OUTPUT || echo "needs_deployment=false" >> $GITHUB_OUTPUT
+      
+      - name: Update PR body with checkbox
+        if: steps.check_changes.outputs.needs_deployment == 'true'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            let body = pr.body;
+            
+            // Check if checkbox needs to be ticked
+            if (body && !body.includes('- [x] Is there anything to do post-deployment?')) {
+              body = body.replace(
+                '- [ ] Is there anything to do post-deployment?',
+                '- [x] Is there anything to do post-deployment?'
+              );
+              
+              github.rest.pulls.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: pr.number,
+                body: body
+              });
+            }
